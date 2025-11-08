@@ -21,7 +21,16 @@ export default function Ranking() {
   }, [isAuthenticated, authLoading, setLocation]);
 
   const { data: rankings = [], isLoading: rankingsLoading } = useQuery<RankingEntry[]>({
-    queryKey: ['/api/ranking', { friendsOnly: showFriendsOnly, userId: user?.id }],
+    queryKey: ['/api/ranking', showFriendsOnly, user?.id],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        friendsOnly: showFriendsOnly.toString(),
+        ...(user?.id && { userId: user.id }),
+      });
+      const response = await fetch(`/api/ranking?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch ranking');
+      return response.json();
+    },
     enabled: !!user,
   });
 

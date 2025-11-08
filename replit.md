@@ -149,11 +149,17 @@ npm run dev
 ## Testing
 - Dados mockados permitem teste imediato
 - **Usuários de teste disponíveis** (todos com senha "123456"):
-  - maria.silva / 123456 (Maria Silva)
-  - joao.santos / 123456 (João Santos)
-  - ana.costa / 123456 (Ana Costa)
-  - pedro.lima / 123456 (Pedro Lima)
-  - carla.mendes / 123456 (Carla Mendes)
+  - **Usuários comuns:**
+    - maria.silva / 123456 (Maria Silva)
+    - joao.santos / 123456 (João Santos)
+    - ana.costa / 123456 (Ana Costa)
+    - pedro.lima / 123456 (Pedro Lima)
+    - carla.mendes / 123456 (Carla Mendes)
+    - carlos.oliveira / 123456 (Carlos Oliveira)
+    - juliana.rocha / 123456 (Juliana Rocha)
+  - **Usuários especiais:**
+    - prefeitura.ctba / 123456 (Prefeitura de Curitiba)
+    - loja.ruaxv / 123456 (Lojista Rua XV)
 - Geolocalização simulada com incrementos aleatórios
 
 ## Security Notes

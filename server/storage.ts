@@ -45,11 +45,18 @@ export class MemStorage implements IStorage {
     const hashedPassword = bcrypt.hashSync("123456", 10);
     
     const mockUsers: User[] = [
+      // Usuários originais
       { id: "1", username: "maria.silva", password: hashedPassword, displayName: "Maria Silva", avatar: null },
       { id: "2", username: "joao.santos", password: hashedPassword, displayName: "João Santos", avatar: null },
       { id: "3", username: "ana.costa", password: hashedPassword, displayName: "Ana Costa", avatar: null },
       { id: "4", username: "pedro.lima", password: hashedPassword, displayName: "Pedro Lima", avatar: null },
       { id: "5", username: "carla.mendes", password: hashedPassword, displayName: "Carla Mendes", avatar: null },
+      
+      // Novos usuários solicitados
+      { id: "6", username: "prefeitura.ctba", password: hashedPassword, displayName: "Prefeitura de Curitiba", avatar: null },
+      { id: "7", username: "loja.ruaxv", password: hashedPassword, displayName: "Lojista Rua XV", avatar: null },
+      { id: "8", username: "carlos.oliveira", password: hashedPassword, displayName: "Carlos Oliveira", avatar: null },
+      { id: "9", username: "juliana.rocha", password: hashedPassword, displayName: "Juliana Rocha", avatar: null },
     ];
     
     mockUsers.forEach(user => this.users.set(user.id, user));
@@ -61,6 +68,8 @@ export class MemStorage implements IStorage {
       { id: "w3", userId: "3", distance: 32.1, energy: 1605, duration: 120, createdAt: new Date() },
       { id: "w4", userId: "4", distance: 28.5, energy: 1425, duration: 110, createdAt: new Date() },
       { id: "w5", userId: "5", distance: 24.9, energy: 1245, duration: 100, createdAt: new Date() },
+      { id: "w6", userId: "8", distance: 52.1, energy: 2605, duration: 200, createdAt: new Date() },
+      { id: "w7", userId: "9", distance: 41.2, energy: 2060, duration: 160, createdAt: new Date() },
     ];
     
     mockWalks.forEach(walk => this.walks.set(walk.id, walk));
@@ -194,20 +203,26 @@ export class MemStorage implements IStorage {
       usersToRank = Array.from(this.users.values());
     }
     
-    const rankings: RankingEntry[] = await Promise.all(
+    const rankings: Omit<RankingEntry, 'position'>[] = await Promise.all(
       usersToRank.map(async (user) => {
         const stats = await this.getUserTotalStats(user.id);
         return {
-          userId: user.id,
-          username: user.displayName,
-          totalEnergy: stats.totalEnergy,
-          totalDistance: stats.totalDistance,
-          totalWalks: stats.totalWalks,
+          id: user.id,
+          name: user.displayName,
+          energy: stats.totalEnergy,
+          distance: stats.totalDistance,
+          avatar: user.avatar ?? undefined,
         };
       })
     );
     
-    return rankings.sort((a, b) => b.totalEnergy - a.totalEnergy);
+    // Sort by energy and assign positions
+    rankings.sort((a, b) => b.energy - a.energy);
+    
+    return rankings.map((entry, index) => ({
+      ...entry,
+      position: index + 1,
+    }));
   }
 }
 
