@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap, MapPin, Monitor } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/lib/auth";
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="px-4 py-6 text-center border-b border-border bg-card">
@@ -55,15 +58,27 @@ export default function Home() {
           </div>
 
           <div className="space-y-3">
-            <Link href="/walk">
-              <Button 
-                className="w-full h-12 text-base font-semibold rounded-full" 
-                size="lg"
-                data-testid="button-start-walk"
-              >
-                Iniciar Caminhada na XV
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/walk">
+                <Button 
+                  className="w-full h-12 text-base font-semibold rounded-full" 
+                  size="lg"
+                  data-testid="button-start-walk"
+                >
+                  Iniciar Caminhada na XV
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button 
+                  className="w-full h-12 text-base font-semibold rounded-full" 
+                  size="lg"
+                  data-testid="button-login"
+                >
+                  Entrar para Começar
+                </Button>
+              </Link>
+            )}
             
             <Button 
               variant="outline" 
@@ -85,7 +100,7 @@ export default function Home() {
               
               <div className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  <strong className="text-foreground">Para Pedestres:</strong> Caminhe pela Rua XV e veja sua contribuição energética. Participe do ranking e ganhe reconhecimento!
+                  <strong className="text-foreground">Para Pedestres:</strong> Caminhe pela Rua XV e veja sua contribuição energética. Participe do ranking com seus amigos e ganhe reconhecimento!
                 </p>
                 <p>
                   <strong className="text-foreground">Para Lojistas:</strong> Publicidade alimentada pela energia dos pedestres, mostrando o movimento em tempo real.

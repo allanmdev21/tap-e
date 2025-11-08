@@ -1,20 +1,29 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Zap } from "lucide-react";
+import { Trophy, Zap, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
+import type { RankingEntry } from "@shared/schema";
 
 export default function Ranking() {
-  const rankingData = [
-    { id: "1", position: 1, name: "Maria Silva", distance: 45.3, energy: 2265 },
-    { id: "2", position: 2, name: "João Santos", distance: 38.7, energy: 1935 },
-    { id: "3", position: 3, name: "Ana Costa", distance: 32.1, energy: 1605 },
-    { id: "4", position: 4, name: "Pedro Lima", distance: 28.5, energy: 1425 },
-    { id: "5", position: 5, name: "Carla Mendes", distance: 24.9, energy: 1245 },
-    { id: "6", position: 6, name: "Lucas Ferreira", distance: 21.3, energy: 1065 },
-    { id: "7", position: 7, name: "Julia Alves", distance: 18.7, energy: 935 },
-    { id: "8", position: 8, name: "Rafael Souza", distance: 15.2, energy: 760 },
-    { id: "9", position: 9, name: "Beatriz Rocha", distance: 12.8, energy: 640 },
-    { id: "10", position: 10, name: "Gabriel Dias", distance: 10.4, energy: 520 },
-  ];
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  const [showFriendsOnly, setShowFriendsOnly] = useState(true);
+  
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      setLocation("/login");
+    }
+  }, [isAuthenticated, authLoading, setLocation]);
+
+  const { data: rankings = [], isLoading: rankingsLoading } = useQuery<RankingEntry[]>({
+    queryKey: ['/api/ranking', { friendsOnly: showFriendsOnly, userId: user?.id }],
+    enabled: !!user,
+  });
 
   const getMedalIcon = (position: number) => {
     if (position === 1) return "🥇";
@@ -26,73 +35,125 @@ export default function Ranking() {
   return (
     <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="px-4 py-6 text-center border-b border-border bg-card">
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 mb-4">
           <Trophy className="w-6 h-6 text-primary" />
           <h1 className="text-xl font-bold text-foreground">Ranking da XV</h1>
+        </div>
+        
+        <div className="flex gap-2 max-w-md mx-auto">
+          <Button
+            variant={showFriendsOnly ? "default" : "outline"}
+            className="flex-1 h-10 rounded-full font-medium"
+            onClick={() => setShowFriendsOnly(true)}
+            data-testid="button-friends-only"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Amigos
+          </Button>
+          <Button
+            variant={!showFriendsOnly ? "default" : "outline"}
+            className="flex-1 h-10 rounded-full font-medium"
+            onClick={() => setShowFriendsOnly(false)}
+            data-testid="button-all-users"
+          >
+            <Trophy className="w-4 h-4 mr-2" />
+            Todos
+          </Button>
         </div>
       </header>
 
       <main className="flex-1 px-4 py-6">
         <div className="max-w-md mx-auto space-y-4">
-          <Card className="bg-primary/5">
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Top caminhantes da Rua XV este mês
-              </p>
-            </CardContent>
-          </Card>
+          {rankingsLoading ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">Carregando...</p>
+              </CardContent>
+            </Card>
+          ) : rankings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  {showFriendsOnly 
+                    ? "Adicione amigos para ver o ranking!" 
+                    : "Nenhum usuário no ranking ainda."}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {rankings.map((entry) => {
+                const isTopThree = entry.position <= 3;
+                const medal = getMedalIcon(entry.position);
+                const isCurrentUser = user?.id === entry.id;
+                const initials = entry.name
+                  .split(" ")
+                  .map(n => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2);
 
-          <div className="space-y-2">
-            {rankingData.map((entry) => {
-              const isTopThree = entry.position <= 3;
-              const medal = getMedalIcon(entry.position);
-
-              return (
-                <Card
-                  key={entry.id}
-                  className={isTopThree ? "bg-amber-50 dark:bg-amber-950/20" : ""}
-                  data-testid={`ranking-item-${entry.position}`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-muted text-center flex-shrink-0">
-                        {medal ? (
-                          <span className="text-2xl">{medal}</span>
-                        ) : (
-                          <span className="text-lg font-bold text-muted-foreground">
-                            {entry.position}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground truncate">
-                          {entry.name}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-sm text-muted-foreground">
-                            {entry.distance} km
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-primary" />
-                            <span className="text-sm text-muted-foreground">
-                              {entry.energy} Wh
+                return (
+                  <Card
+                    key={entry.id}
+                    className={`${isTopThree ? "bg-amber-50 dark:bg-amber-950/20" : ""} ${isCurrentUser ? "border-primary border-2" : ""}`}
+                    data-testid={`ranking-item-${entry.position}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-muted text-center flex-shrink-0">
+                          {medal ? (
+                            <span className="text-2xl">{medal}</span>
+                          ) : (
+                            <span className="text-lg font-bold text-muted-foreground">
+                              {entry.position}
                             </span>
+                          )}
+                        </div>
+
+                        <Avatar className="w-10 h-10 flex-shrink-0">
+                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-foreground truncate">
+                              {entry.name}
+                            </p>
+                            {isCurrentUser && (
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                Você
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-sm text-muted-foreground">
+                              {entry.distance.toFixed(1)} km
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <Zap className="w-3 h-3 text-primary" />
+                              <span className="text-sm text-muted-foreground">
+                                {entry.energy.toFixed(0)} Wh
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {isTopThree && (
-                        <Badge variant="secondary" className="flex-shrink-0">
-                          Top {entry.position}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                        {isTopThree && (
+                          <Badge variant="secondary" className="flex-shrink-0">
+                            Top {entry.position}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </div>

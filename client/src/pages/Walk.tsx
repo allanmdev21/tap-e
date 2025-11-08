@@ -3,15 +3,42 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Zap, Clock, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Walk() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [permissionGranted, setPermissionGranted] = useState(false);
+  
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/login");
+    }
+  }, [isAuthenticated, isLoading, setLocation]);
   const [isWalking, setIsWalking] = useState(false);
   const [distance, setDistance] = useState(0);
   const [energy, setEnergy] = useState(0);
   const [duration, setDuration] = useState(0);
   const [walkCompleted, setWalkCompleted] = useState(false);
   const { toast } = useToast();
+
+  const saveWalkMutation = useMutation({
+    mutationFn: async (walkData: { userId: string; distance: number; energy: number; duration: number }) => {
+      const response = await fetch("/api/walks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(walkData),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ranking'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users', user?.id] });
+    },
+  });
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -53,6 +80,17 @@ export default function Walk() {
   const endWalk = () => {
     setIsWalking(false);
     setWalkCompleted(true);
+    
+    // Save walk to backend
+    if (user) {
+      saveWalkMutation.mutate({
+        userId: user.id,
+        distance,
+        energy,
+        duration,
+      });
+    }
+    
     toast({
       title: "Caminhada finalizada!",
       description: `Você gerou ${energy.toFixed(0)} Wh de energia`,

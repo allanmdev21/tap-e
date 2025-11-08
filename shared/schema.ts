@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -7,6 +7,8 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  displayName: text("display_name").notNull(),
+  avatar: text("avatar"),
 });
 
 export const walks = pgTable("walks", {
@@ -15,6 +17,14 @@ export const walks = pgTable("walks", {
   distance: real("distance").notNull(),
   energy: real("energy").notNull(),
   duration: integer("duration").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const friendships = pgTable("friendships", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  friendId: varchar("friend_id").notNull(),
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -27,14 +37,24 @@ export const stores = pgTable("stores", {
   dailyFootTraffic: integer("daily_foot_traffic").default(0),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(3),
+  password: z.string().min(6),
 });
 
 export const insertWalkSchema = createInsertSchema(walks).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertFriendshipSchema = createInsertSchema(friendships).omit({
+  id: true,
+  createdAt: true,
+  status: true,
 });
 
 export const insertStoreSchema = createInsertSchema(stores).omit({
@@ -43,8 +63,11 @@ export const insertStoreSchema = createInsertSchema(stores).omit({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type LoginCredentials = z.infer<typeof loginSchema>;
 export type InsertWalk = z.infer<typeof insertWalkSchema>;
 export type Walk = typeof walks.$inferSelect;
+export type InsertFriendship = z.infer<typeof insertFriendshipSchema>;
+export type Friendship = typeof friendships.$inferSelect;
 export type InsertStore = z.infer<typeof insertStoreSchema>;
 export type Store = typeof stores.$inferSelect;
 
@@ -54,4 +77,14 @@ export type RankingEntry = {
   name: string;
   distance: number;
   energy: number;
+  avatar?: string;
+  isFriend?: boolean;
+};
+
+export type UserProfile = {
+  user: User;
+  totalWalks: number;
+  totalDistance: number;
+  totalEnergy: number;
+  friendsCount: number;
 };
