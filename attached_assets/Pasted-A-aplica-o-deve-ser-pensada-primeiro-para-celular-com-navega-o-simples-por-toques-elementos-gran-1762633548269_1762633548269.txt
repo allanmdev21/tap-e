@@ -1,0 +1,227 @@
+A aplicação deve ser pensada primeiro para celular, com navegação simples por toques, elementos grandes e legíveis, parecendo um app de cidade inteligente / smart city. Depois, pode ser adaptada para tablet/desktop.
+
+🧱 Stack sugerida (se for gerar código)
+
+Mobile-first: layout pensado para telas de 360–430px de largura.
+
+Framework: React ou Next.js
+
+Estilização: Tailwind CSS
+
+Ícones: estilo outline (Heroicons, Lucide ou similar)
+
+📱 DIRETRIZES MOBILE-FIRST
+
+Tudo deve ser coluna única no mobile.
+
+Navegação por bottom bar (menu inferior) com 3–4 ícones:
+
+Início
+
+Caminhada
+
+Ranking
+
+Painéis (Lojista/Prefeitura)
+
+Botões grandes, com área de toque confortável.
+
+Tipografia grande e clara.
+
+Cards ocupando quase toda a largura da tela, com espaçamento interno generoso.
+
+Em telas maiores (tablet/desktop), o layout pode virar 2 colunas, mas o mobile é prioridade.
+
+🏠 TELA 1 – Início (Home)
+
+Objetivo: explicar o projeto de forma rápida e visual.
+
+Componentes (mobile-first):
+
+Header simples com logo em texto:
+Energia+Publicidade
+
+Bloco principal:
+
+Título grande:
+Transformando Energia em Publicidade
+
+Subtítulo:
+“Já pensou em ganhar dinheiro com o chão?”
+
+Texto curto (2–3 linhas) explicando:
+
+Pisos que captam energia cinética na Rua XV.
+
+Totens de LED alimentados com essa energia.
+
+Uso de geolocalização do celular para medir quanto a pessoa andou na XV.
+
+Botão principal (full width): Iniciar Caminhada na XV
+
+Botão secundário (outline, full width): Entenda o Projeto
+
+No mobile, tudo em uma coluna, com bastante espaço entre os elementos.
+
+📍 TELA 2 – Caminhada com Geolocalização
+
+Nome da tela: Minha Caminhada na XV
+Função principal: usar geolocalização para medir a distância percorrida.
+
+Elementos:
+
+Primeiro acesso:
+
+Texto curto explicando que o app precisa acessar a geolocalização.
+
+Ícone de localização (outline).
+
+Botão grande: Permitir geolocalização.
+
+Após permissão:
+
+Use a Geolocation API do navegador para:
+
+Capturar posição atual.
+
+Atualizar a posição ao longo do tempo.
+
+No layout mobile, mostrar:
+
+Um card grande com:
+
+Título: Distância na Rua XV
+
+Valor em destaque (número grande): 0,00 km (atualizando conforme caminha).
+
+Dois cards menores logo abaixo:
+
+Energia estimada gerada (Wh)
+(ex: distância × fator de conversão simbólico).
+
+Tempo de caminhada (minutos).
+
+Botão fixo na parte inferior:
+Encerrar caminhada
+
+O layout deve lembrar apps de fitness, mas bem minimalista e clean, sem poluição visual.
+
+🏆 TELA 3 – Ranking da Energia
+
+Nome da tela: Ranking da XV
+
+Lista vertical, própria pra thumb scroll (rolagem com o polegar).
+
+Cada item do ranking deve conter:
+
+Posição (1, 2, 3…)
+
+Nome ou apelido do usuário
+
+Distância percorrida
+
+Energia gerada (Wh)
+
+Top 3 com destaque (ícones 🥇🥈🥉 ou cores de fundo levemente diferentes).
+
+Tudo em lista simples, fundo branco, divisórias suaves, visual de leaderboard moderno.
+
+🏬 TELA 4 – Painel do Lojista (Mobile-First)
+
+Tela com cara de dashboard minimalista, mas adaptado pra celular.
+
+Componentes:
+
+Título: Painel do Lojista
+
+Formulário em scroll vertical:
+
+Input: Nome do estabelecimento
+
+Input: Trecho/número da Rua XV
+
+Componente para upload de logo (um card com ícone de upload e texto: Adicionar logo).
+
+Abaixo, cards de métricas:
+
+Energia gerada hoje em frente à loja (Wh)
+
+Fluxo estimado de pedestres (pessoas/dia)
+
+Botão full width: Editar anúncio no totem
+
+No mobile, os cards são empilhados, cada um ocupando quase toda a largura.
+
+🏛️ TELA 5 – Painel da Prefeitura (Mobile Dashboard)
+
+Simplificar para caber bem em tela pequena:
+
+Título: Painel da Prefeitura
+
+Cards principais (stack vertical):
+
+Energia total gerada na Rua XV
+
+Número de totens ativos
+
+Lojas participantes
+
+Um gráfico simples (linha ou barra minimalista) mostrando a energia gerada por dia (pode ser um mini chart adaptado ao mobile).
+
+Pequeno texto explicativo:
+
+Uso dos dados para planejamento de iluminação, segurança e revitalização urbana.
+
+🎨 DESIGN (Moderno, Clean e Mobile-First)
+
+Paleta de cores:
+
+Fundo: #F9FAFB ou #F5F5F7
+
+Texto principal: #111827
+
+Texto secundário: #6B7280
+
+Destaques:
+
+Verde tecnológico: #22C55E ou
+
+Azul tecnológico: #3B82F6
+
+Componentes:
+
+Cards com cantos arredondados (16–24px), leve sombra suave.
+
+Botões grandes (altura mínima ~48px), com bordas arredondadas (border-radius: 9999px opcional para estilo "pill").
+
+Tipografia:
+
+Fonte: Inter, Poppins ou similar.
+
+Títulos em semibold, textos normais.
+
+Interações:
+
+Hover só precisa ser mais forte no desktop; no mobile, foca em feedback visual ao toque (mudança de cor/opacidade).
+
+Responsivo:
+
+Design pensado primeiro para 375x812 (tamanho típico de smartphone).
+
+Em desktop, pode expandir para duas colunas, mas mantendo a estética clean.
+
+🧪 OBJETIVO DO PROTÓTIPO
+
+A aplicação deve:
+
+Mostrar como pisos de energia e geolocalização transformam passos em energia e publicidade.
+
+Comunicar os benefícios para:
+
+Prefeitura (dados e iluminação)
+
+Lojistas (publicidade + fluxo na porta)
+
+Pedestres (ranking, gamificação, pertencimento)
+
+Parecer um app moderno de cidade inteligente, com foco total em mobile-first, moderno e clean.
