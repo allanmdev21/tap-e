@@ -22,6 +22,21 @@ O projeto combina:
 - **Charts**: Recharts
 
 ## Recent Changes (Latest First)
+### v1.2 - Friend Requests & City Dashboard (Nov 2025)
+- **Friends**: Sistema completo de pedidos de amizade com aceitar/rejeitar
+  - Seção "Convites Pendentes" na página de amigos
+  - Backend enriquece pedidos com nome do solicitante (evita N+1 queries)
+  - Invalidação de cache correta após aceitar/rejeitar
+  - Endpoint PUT `/api/friends/:id/reject` para rejeitar convites
+  - Tratamento de erro com toast quando falha ao carregar convites
+- **City Dashboard**: Dashboard da prefeitura com métricas reais
+  - Endpoint GET `/api/city/stats` retorna estatísticas agregadas
+  - Método `getCityStats()` em IStorage calcula métricas em tempo real
+  - 4 KPIs principais: Energia Total, Total Usuários, Usuários Ativos, Média/Usuário
+  - Top 5 caminhadores com distância e energia gerada
+  - Substituído dados mockados por dados reais do backend
+- **Testing**: Todos os fluxos testados end-to-end com Playwright
+
 ### v1.1 - Security Enhancements (Nov 2025)
 - **Security**: Implementado bcrypt para hashing de senhas (10 rounds)
 - **Security**: Método `verifyPassword()` para autenticação segura
@@ -62,16 +77,19 @@ O projeto combina:
 
 ### API Endpoints
 ```
-POST   /api/auth/register      - Criar conta
-POST   /api/auth/login         - Fazer login
-GET    /api/users/:id          - Buscar perfil completo do usuário
-POST   /api/walks              - Salvar caminhada
-GET    /api/walks/user/:userId - Buscar caminhadas do usuário
-GET    /api/ranking            - Ranking (com filtro de amigos)
-GET    /api/friends/:userId    - Listar amigos
-POST   /api/friends/request    - Enviar pedido de amizade
-PUT    /api/friends/:id/accept - Aceitar pedido
-DELETE /api/friends/:userId/:friendId - Remover amigo
+POST   /api/auth/register              - Criar conta
+POST   /api/auth/login                 - Fazer login
+GET    /api/users/:id                  - Buscar perfil completo do usuário
+POST   /api/walks                      - Salvar caminhada
+GET    /api/walks/user/:userId         - Buscar caminhadas do usuário
+GET    /api/ranking                    - Ranking (com filtro de amigos)
+GET    /api/friends/:userId            - Listar amigos aceitos
+GET    /api/friends/:userId/requests   - Listar pedidos pendentes (enriquecido com nome)
+POST   /api/friends/request            - Enviar pedido de amizade
+PUT    /api/friends/:id/accept         - Aceitar pedido
+PUT    /api/friends/:id/reject         - Rejeitar pedido
+DELETE /api/friends/:userId/:friendId  - Remover amigo
+GET    /api/city/stats                 - Estatísticas agregadas da cidade
 ```
 
 ### Authentication System
@@ -117,7 +135,9 @@ DELETE /api/friends/:userId/:friendId - Remover amigo
 - Salvamento de caminhadas no backend
 
 ### 3. Rede Social
-- Sistema de amigos
+- Sistema completo de amigos com pedidos
+- Visualizar convites pendentes recebidos
+- Aceitar ou rejeitar pedidos de amizade
 - Ranking filtrado por amigos
 - Perfil de usuário com estatísticas
 - Adicionar/remover amigos
@@ -135,7 +155,11 @@ DELETE /api/friends/:userId/:friendId - Remover amigo
 
 ### 6. Painéis
 - **Lojista**: Cadastro de estabelecimento, métricas de energia e fluxo
-- **Prefeitura**: Energia total, totens ativos, gráficos, insights urbanos
+- **Prefeitura**: Dashboard em tempo real com:
+  - 4 KPIs principais (Energia Total, Total Usuários, Usuários Ativos, Média/Usuário)
+  - Top 5 caminhadores da cidade
+  - Métricas calculadas dinamicamente do backend
+  - Interface mobile-first otimizada
 
 ## Running the Project
 ```bash
