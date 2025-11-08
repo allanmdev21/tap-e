@@ -22,6 +22,34 @@ O projeto combina:
 - **Charts**: Recharts
 
 ## Recent Changes (Latest First)
+### v1.3 - Role-Based Access Control & Store Dashboards (Nov 2025)
+- **Security**: Implementada autenticação server-side com express-session
+  - Sessões httpOnly cookies (não podem ser forjadas via JavaScript)
+  - Session regeneration on login (previne session fixation)
+  - Endpoint POST `/api/auth/logout` destrói sessão server-side
+  - Middleware `requireAuth` valida sessão antes de autorizar requests
+- **Roles System**: Usuários agora têm roles (user, store_owner, city_admin)
+  - city_admin (prefeitura.ctba): acesso total a dados da cidade e lojas
+  - store_owner (loja.ruaxv): acesso apenas aos dados da própria loja
+  - user (demais usuários): acesso normal ao app (caminhadas, ranking, amigos)
+- **Store Data Model**: Expandido schema de lojas
+  - stores: userId (owner), kineticFloors, ledTotems, energyToday, dailyFootTraffic
+  - storeTraffic: histórico de tráfego de pedestres por loja
+  - 3 lojas mockadas: Cafeteria Rua XV, Boutique Fashion, Livraria Central
+- **Protected Endpoints**:
+  - GET `/api/stores` - APENAS city_admin (retorna todas as lojas)
+  - GET `/api/stores/my-store` - APENAS store_owner (retorna loja do usuário)
+  - GET `/api/stores/:id/stats` - city_admin (qualquer loja) ou store_owner (própria loja)
+- **City Dashboard**: Atualizado com dados completos de lojas
+  - Mostra total de lojas parceiras e totens LED
+  - Destaca loja com pico de tráfego do dia
+  - Lista todas as lojas com pisos, totens e pedestres
+- **Store Dashboard**: Mostra apenas dados da loja do owner logado
+  - Nome, localização, pisos cinéticos, totens LED
+  - Métricas do dia: energia gerada, pedestres
+  - Estatísticas totais históricas
+- **Testing**: RBAC testado end-to-end para os 3 perfis (admin, lojista, usuário)
+
 ### v1.2 - Friend Requests & City Dashboard (Nov 2025)
 - **Friends**: Sistema completo de pedidos de amizade com aceitar/rejeitar
   - Seção "Convites Pendentes" na página de amigos
@@ -58,10 +86,11 @@ O projeto combina:
 
 ### Data Model (shared/schema.ts)
 ```typescript
-- users: id, username, password, displayName, avatar
+- users: id, username, password, displayName, avatar, role (user|store_owner|city_admin)
 - walks: id, userId, distance, energy, duration, createdAt
 - friendships: id, userId, friendId, status (pending/accepted/rejected), createdAt
-- stores: id, name, location, logo, energyToday, dailyFootTraffic
+- stores: id, userId (owner), name, location, logo, kineticFloors, ledTotems, energyToday, dailyFootTraffic
+- storeTraffic: id, storeId, pedestrians, energy, date
 ```
 
 ### Pages Structure
@@ -78,7 +107,8 @@ O projeto combina:
 ### API Endpoints
 ```
 POST   /api/auth/register              - Criar conta
-POST   /api/auth/login                 - Fazer login
+POST   /api/auth/login                 - Fazer login (cria sessão server-side)
+POST   /api/auth/logout                - Fazer logout (destrói sessão)
 GET    /api/users/:id                  - Buscar perfil completo do usuário
 POST   /api/walks                      - Salvar caminhada
 GET    /api/walks/user/:userId         - Buscar caminhadas do usuário
@@ -90,13 +120,24 @@ PUT    /api/friends/:id/accept         - Aceitar pedido
 PUT    /api/friends/:id/reject         - Rejeitar pedido
 DELETE /api/friends/:userId/:friendId  - Remover amigo
 GET    /api/city/stats                 - Estatísticas agregadas da cidade
+
+** Protected Store Endpoints (requerem autenticação):**
+GET    /api/stores                     - Listar todas as lojas [city_admin only]
+GET    /api/stores/my-store            - Buscar loja do owner logado [store_owner only]
+GET    /api/stores/:id/stats           - Estatísticas de uma loja [city_admin: any | store_owner: own only]
 ```
 
 ### Authentication System
-- Context API para gerenciar estado de autenticação
-- LocalStorage para persistência de sessão
-- Proteção de rotas via useEffect redirect
-- Bottom navigation dinâmica baseada em autenticação
+- **Server-side**: express-session com MemoryStore
+  - Sessões armazenadas em memória no servidor
+  - Cookies httpOnly (seguros contra XSS)
+  - Session regeneration on login (anti-fixation)
+  - Middleware `requireAuth` valida sessão antes de autorizar
+- **Frontend**: Context API + LocalStorage
+  - LocalStorage mantém estado do usuário (UX)
+  - Autenticação real é via session cookie (servidor)
+  - credentials: "include" em todas as requests
+  - Bottom navigation dinâmica baseada em autenticação
 
 ### Mock Data
 **IMPORTANTE**: O projeto usa dados mockados em memória
@@ -190,9 +231,14 @@ npm run dev
 - ✅ Senhas hasheadas com bcrypt (10 rounds)
 - ✅ Senhas nunca retornadas em respostas da API
 - ✅ Verificação segura de credenciais via bcrypt.compare()
-- ⚠️ **TODO (Produção)**: Implementar tokens JWT ou sessions server-side
+- ✅ **Server-side sessions** com express-session (httpOnly cookies)
+- ✅ **Session regeneration** on login (previne session fixation)
+- ✅ **Role-based authorization** em endpoints protegidos
+- ✅ Middleware valida sessão antes de autorizar acesso a dados sensíveis
+- ⚠️ **TODO (Produção)**: Configurar SESSION_SECRET via variável de ambiente
 - ⚠️ **TODO (Produção)**: Rate limiting em endpoints de autenticação
-- ⚠️ **TODO (Produção)**: HTTPS obrigatório
+- ⚠️ **TODO (Produção)**: HTTPS obrigatório (secure: true em cookies)
+- ⚠️ **TODO (Produção)**: Migrar MemoryStore para Redis/PostgreSQL (sessões persistentes)
 
 ## Next Steps (Fora do MVP)
 - [ ] Server-side session/token management para autenticação de API
