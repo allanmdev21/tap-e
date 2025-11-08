@@ -149,6 +149,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/city/stats", async (req, res) => {
+    try {
+      const stats = await storage.getCityStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch city stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

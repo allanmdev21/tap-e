@@ -1,119 +1,150 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Monitor, Store, Info } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Zap, Users, TrendingUp, BarChart3 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+interface CityStats {
+  totalEnergy: number;
+  totalUsers: number;
+  activeUsers: number;
+  topWalkers: {
+    username: string;
+    displayName: string;
+    distance: number;
+    energy: number;
+  }[];
+}
 
 export default function CityDashboard() {
-  const chartData = [
-    { day: "Seg", energy: 4200 },
-    { day: "Ter", energy: 3800 },
-    { day: "Qua", energy: 5100 },
-    { day: "Qui", energy: 4700 },
-    { day: "Sex", energy: 6300 },
-    { day: "Sáb", energy: 7800 },
-    { day: "Dom", energy: 5900 },
-  ];
+  const { data: stats, isLoading } = useQuery<CityStats>({
+    queryKey: ['/api/city/stats'],
+  });
+
+  if (isLoading || !stats) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-lg text-muted-foreground">Carregando dados...</div>
+      </div>
+    );
+  }
+
+  const activePercentage = stats.totalUsers > 0 
+    ? Math.round((stats.activeUsers / stats.totalUsers) * 100) 
+    : 0;
 
   return (
     <div className="px-4 py-6">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="grid grid-cols-3 gap-3">
-          <Card>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="grid grid-cols-2 gap-3">
+          <Card data-testid="card-total-energy">
             <CardContent className="p-4 text-center space-y-2">
               <div className="p-2 rounded-lg bg-primary/10 inline-block">
                 <Zap className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground" data-testid="text-total-energy">
-                  37.8
+                  {(stats.totalEnergy / 1000).toFixed(1)}
                 </p>
                 <p className="text-xs text-muted-foreground">kWh total</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="card-total-users">
             <CardContent className="p-4 text-center space-y-2">
               <div className="p-2 rounded-lg bg-primary/10 inline-block">
-                <Monitor className="w-6 h-6 text-primary" />
+                <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground" data-testid="text-active-totems">
-                  24
+                <p className="text-2xl font-bold text-foreground" data-testid="text-total-users">
+                  {stats.totalUsers}
                 </p>
-                <p className="text-xs text-muted-foreground">totens ativos</p>
+                <p className="text-xs text-muted-foreground">usuários</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="card-active-users">
             <CardContent className="p-4 text-center space-y-2">
               <div className="p-2 rounded-lg bg-primary/10 inline-block">
-                <Store className="w-6 h-6 text-primary" />
+                <TrendingUp className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground" data-testid="text-participating-stores">
-                  48
+                <p className="text-2xl font-bold text-foreground" data-testid="text-active-users">
+                  {stats.activeUsers}
                 </p>
-                <p className="text-xs text-muted-foreground">lojas</p>
+                <p className="text-xs text-muted-foreground">ativos ({activePercentage}%)</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-avg-energy">
+            <CardContent className="p-4 text-center space-y-2">
+              <div className="p-2 rounded-lg bg-primary/10 inline-block">
+                <BarChart3 className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground" data-testid="text-avg-energy">
+                  {stats.activeUsers > 0 
+                    ? Math.round(stats.totalEnergy / stats.activeUsers)
+                    : 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Wh/usuário</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Card>
+        <Card data-testid="card-top-walkers">
           <CardHeader>
-            <CardTitle className="text-lg">Energia Gerada por Dia</CardTitle>
+            <CardTitle className="text-lg">Top Caminhadores</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="day" 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                  />
-                  <YAxis 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
-                  <Bar 
-                    dataKey="energy" 
-                    fill="hsl(var(--primary))" 
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {stats.topWalkers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Nenhum dado de caminhadas ainda
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {stats.topWalkers.slice(0, 5).map((walker, index) => (
+                  <div 
+                    key={walker.username}
+                    className="flex items-center gap-3 p-3 rounded-md hover-elevate"
+                    data-testid={`walker-${index + 1}`}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-primary">
+                        {index + 1}
+                      </span>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {walker.displayName}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-foreground">
+                        {walker.distance.toFixed(1)} km
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {walker.energy} Wh
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="bg-primary/5">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <Info className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <p className="font-semibold text-foreground mb-2">Uso dos Dados</p>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>
-                    • <strong className="text-foreground">Iluminação:</strong> Otimização do consumo energético
-                  </p>
-                  <p>
-                    • <strong className="text-foreground">Segurança:</strong> Identificação de áreas com maior fluxo
-                  </p>
-                  <p>
-                    • <strong className="text-foreground">Planejamento:</strong> Dados para revitalização urbana
-                  </p>
-                </div>
-              </div>
-            </div>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">
+              Dashboard com métricas em tempo real do projeto Rua XV.
+              Os dados mostram o impacto dos pisos cinéticos e o engajamento dos cidadãos
+              com a mobilidade sustentável na cidade.
+            </p>
           </CardContent>
         </Card>
       </div>

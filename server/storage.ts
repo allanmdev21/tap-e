@@ -23,6 +23,14 @@ export interface IStorage {
   
   // Ranking
   getRankingData(friendsOnly: boolean, userId?: string): Promise<RankingEntry[]>;
+  
+  // City stats (for admin dashboard)
+  getCityStats(): Promise<{
+    totalEnergy: number;
+    totalUsers: number;
+    activeUsers: number;
+    topWalkers: { username: string; displayName: string; distance: number; energy: number }[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -223,6 +231,50 @@ export class MemStorage implements IStorage {
       ...entry,
       position: index + 1,
     }));
+  }
+
+  async getCityStats(): Promise<{
+    totalEnergy: number;
+    totalUsers: number;
+    activeUsers: number;
+    topWalkers: { username: string; displayName: string; distance: number; energy: number }[];
+  }> {
+    const allUsers = Array.from(this.users.values());
+    const totalUsers = allUsers.length;
+    
+    // Calculate total energy from all walks
+    const allWalks = Array.from(this.walks.values());
+    const totalEnergy = allWalks.reduce((sum, walk) => sum + walk.energy, 0);
+    
+    // Active users = users with at least one walk
+    const usersWithWalks = new Set(allWalks.map(w => w.userId));
+    const activeUsers = usersWithWalks.size;
+    
+    // Get top 10 walkers
+    const userStats = await Promise.all(
+      allUsers.map(async (user) => {
+        const stats = await this.getUserTotalStats(user.id);
+        return {
+          username: user.username,
+          displayName: user.displayName,
+          distance: stats.totalDistance,
+          energy: stats.totalEnergy,
+        };
+      })
+    );
+    
+    // Sort by distance and get top 10
+    const topWalkers = userStats
+      .filter(u => u.distance > 0)
+      .sort((a, b) => b.distance - a.distance)
+      .slice(0, 10);
+    
+    return {
+      totalEnergy,
+      totalUsers,
+      activeUsers,
+      topWalkers,
+    };
   }
 }
 
