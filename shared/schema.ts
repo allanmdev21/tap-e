@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   displayName: text("display_name").notNull(),
   avatar: text("avatar"),
+  role: text("role").notNull().default("user"), // user, store_owner, city_admin
 });
 
 export const walks = pgTable("walks", {

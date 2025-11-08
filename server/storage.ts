@@ -70,17 +70,17 @@ export class MemStorage implements IStorage {
     
     const mockUsers: User[] = [
       // Usuários originais
-      { id: "1", username: "maria.silva", password: hashedPassword, displayName: "Maria Silva", avatar: null },
-      { id: "2", username: "joao.santos", password: hashedPassword, displayName: "João Santos", avatar: null },
-      { id: "3", username: "ana.costa", password: hashedPassword, displayName: "Ana Costa", avatar: null },
-      { id: "4", username: "pedro.lima", password: hashedPassword, displayName: "Pedro Lima", avatar: null },
-      { id: "5", username: "carla.mendes", password: hashedPassword, displayName: "Carla Mendes", avatar: null },
+      { id: "1", username: "maria.silva", password: hashedPassword, displayName: "Maria Silva", avatar: null, role: "user" },
+      { id: "2", username: "joao.santos", password: hashedPassword, displayName: "João Santos", avatar: null, role: "user" },
+      { id: "3", username: "ana.costa", password: hashedPassword, displayName: "Ana Costa", avatar: null, role: "user" },
+      { id: "4", username: "pedro.lima", password: hashedPassword, displayName: "Pedro Lima", avatar: null, role: "user" },
+      { id: "5", username: "carla.mendes", password: hashedPassword, displayName: "Carla Mendes", avatar: null, role: "user" },
       
       // Novos usuários solicitados
-      { id: "6", username: "prefeitura.ctba", password: hashedPassword, displayName: "Prefeitura de Curitiba", avatar: null },
-      { id: "7", username: "loja.ruaxv", password: hashedPassword, displayName: "Lojista Rua XV", avatar: null },
-      { id: "8", username: "carlos.oliveira", password: hashedPassword, displayName: "Carlos Oliveira", avatar: null },
-      { id: "9", username: "juliana.rocha", password: hashedPassword, displayName: "Juliana Rocha", avatar: null },
+      { id: "6", username: "prefeitura.ctba", password: hashedPassword, displayName: "Prefeitura de Curitiba", avatar: null, role: "city_admin" },
+      { id: "7", username: "loja.ruaxv", password: hashedPassword, displayName: "Lojista Rua XV", avatar: null, role: "store_owner" },
+      { id: "8", username: "carlos.oliveira", password: hashedPassword, displayName: "Carlos Oliveira", avatar: null, role: "user" },
+      { id: "9", username: "juliana.rocha", password: hashedPassword, displayName: "Juliana Rocha", avatar: null, role: "user" },
     ];
     
     mockUsers.forEach(user => this.users.set(user.id, user));
@@ -175,7 +175,8 @@ export class MemStorage implements IStorage {
       ...insertUser, 
       id, 
       password: hashedPassword,
-      avatar: insertUser.avatar ?? null 
+      avatar: insertUser.avatar ?? null,
+      role: insertUser.role ?? "user"
     };
     this.users.set(id, user);
     return user;

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Users, TrendingUp, BarChart3 } from "lucide-react";
+import { Zap, Users, TrendingUp, BarChart3, Store, Monitor } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import type { Store as StoreType } from "@shared/schema";
 
 interface CityStats {
   totalEnergy: number;
@@ -15,11 +16,15 @@ interface CityStats {
 }
 
 export default function CityDashboard() {
-  const { data: stats, isLoading } = useQuery<CityStats>({
+  const { data: stats, isLoading: statsLoading } = useQuery<CityStats>({
     queryKey: ['/api/city/stats'],
   });
 
-  if (isLoading || !stats) {
+  const { data: stores = [], isLoading: storesLoading } = useQuery<StoreType[]>({
+    queryKey: ['/api/stores'],
+  });
+
+  if (statsLoading || storesLoading || !stats) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-lg text-muted-foreground">Carregando dados...</div>
@@ -30,6 +35,18 @@ export default function CityDashboard() {
   const activePercentage = stats.totalUsers > 0 
     ? Math.round((stats.activeUsers / stats.totalUsers) * 100) 
     : 0;
+
+  const totalKineticFloors = stores.reduce((sum, store) => sum + (store.kineticFloors || 0), 0);
+  const totalLedTotems = stores.reduce((sum, store) => sum + (store.ledTotems || 0), 0);
+  const totalStoreEnergy = stores.reduce((sum, store) => sum + (store.energyToday || 0), 0);
+  const totalFootTraffic = stores.reduce((sum, store) => sum + (store.dailyFootTraffic || 0), 0);
+  
+  // Find peak traffic store
+  const peakStore = stores.length > 0 
+    ? stores.reduce((max, store) => 
+        (store.dailyFootTraffic || 0) > (max.dailyFootTraffic || 0) ? store : max
+      )
+    : null;
 
   return (
     <div className="px-4 py-6">
@@ -130,6 +147,121 @@ export default function CityDashboard() {
                       <p className="text-xs text-muted-foreground">
                         {walker.energy} Wh
                       </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Card data-testid="card-total-stores">
+            <CardContent className="p-4 text-center space-y-2">
+              <div className="p-2 rounded-lg bg-primary/10 inline-block">
+                <Store className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground" data-testid="text-total-stores">
+                  {stores.length}
+                </p>
+                <p className="text-xs text-muted-foreground">lojas parceiras</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-total-totems">
+            <CardContent className="p-4 text-center space-y-2">
+              <div className="p-2 rounded-lg bg-primary/10 inline-block">
+                <Monitor className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground" data-testid="text-total-totems">
+                  {totalLedTotems}
+                </p>
+                <p className="text-xs text-muted-foreground">totens LED</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {peakStore && (
+          <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900" data-testid="card-peak-traffic">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                Pico de Tráfego Hoje
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="font-semibold text-foreground" data-testid="text-peak-store-name">
+                  {peakStore.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {peakStore.location}
+                </p>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pedestres</p>
+                    <p className="text-lg font-bold text-foreground" data-testid="text-peak-pedestrians">
+                      {peakStore.dailyFootTraffic}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Energia</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {peakStore.energyToday} Wh
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pisos</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {peakStore.kineticFloors}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card data-testid="card-stores-list">
+          <CardHeader>
+            <CardTitle className="text-lg">Lojas Parceiras ({stores.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stores.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Nenhuma loja cadastrada ainda
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {stores.map((store, index) => (
+                  <div 
+                    key={store.id}
+                    className="flex items-center gap-3 p-3 rounded-md hover-elevate"
+                    data-testid={`store-${index + 1}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {store.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {store.location}
+                      </p>
+                    </div>
+
+                    <div className="text-right space-y-1">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">Pisos:</span>
+                        <span className="font-semibold text-foreground">{store.kineticFloors}</span>
+                        <span className="text-muted-foreground">Totens:</span>
+                        <span className="font-semibold text-foreground">{store.ledTotems}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {store.dailyFootTraffic} pedestres hoje
+                      </div>
                     </div>
                   </div>
                 ))}

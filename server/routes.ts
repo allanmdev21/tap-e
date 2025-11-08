@@ -31,12 +31,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
-      
-      const { password, ...userWithoutPassword } = user;
-      res.json({ user: userWithoutPassword });
+
+      // Regenerate session to prevent fixation attacks
+      req.session.regenerate((err) => {
+        if (err) {
+          return res.status(500).json({ error: "Session error" });
+        }
+
+        // Store user info in server-side session
+        req.session.userId = user.id;
+        req.session.role = user.role;
+        
+        const { password, ...userWithoutPassword } = user;
+        res.json({ user: userWithoutPassword });
+      });
     } catch (error) {
       res.status(400).json({ error: "Invalid data" });
     }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: "Logged out successfully" });
+    });
   });
 
   // User routes
@@ -158,8 +179,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/stores", async (req, res) => {
+  // Middleware to check authentication via server-side session
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Unauthorized - Please log in" });
+    }
+    req.userId = req.session.userId;
+    req.userRole = req.session.role;
+    next();
+  };
+
+  // Get all stores - ONLY for city_admin
+  app.get("/api/stores", requireAuth, async (req: any, res) => {
     try {
+      const user = await storage.getUser(req.userId);
+      if (!user || user.role !== "city_admin") {
+        return res.status(403).json({ error: "Forbidden: Only city admins can view all stores" });
+      }
       const stores = await storage.getAllStores();
       res.json(stores);
     } catch (error) {
@@ -167,9 +203,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/stores/user/:userId", async (req, res) => {
+  // Get own store - for authenticated store_owner
+  app.get("/api/stores/my-store", requireAuth, async (req: any, res) => {
     try {
-      const store = await storage.getStoreByUserId(req.params.userId);
+      const user = await storage.getUser(req.userId);
+      if (!user || user.role !== "store_owner") {
+        return res.status(403).json({ error: "Forbidden: Only store owners can access this" });
+      }
+      const store = await storage.getStoreByUserId(req.userId);
       if (!store) {
         return res.status(404).json({ error: "Store not found" });
       }
@@ -179,10 +220,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/stores/:storeId/stats", async (req, res) => {
+  // Get store stats - verify ownership
+  app.get("/api/stores/:storeId/stats", requireAuth, async (req: any, res) => {
     try {
-      const stats = await storage.getStoreStats(req.params.storeId);
-      res.json(stats);
+      const user = await storage.getUser(req.userId);
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      // City admin can see any store stats
+      if (user.role === "city_admin") {
+        const stats = await storage.getStoreStats(req.params.storeId);
+        return res.json(stats);
+      }
+
+      // Store owner can only see their own store stats
+      if (user.role === "store_owner") {
+        const store = await storage.getStoreByUserId(req.userId);
+        if (!store || store.id !== req.params.storeId) {
+          return res.status(403).json({ error: "Forbidden: Can only view own store stats" });
+        }
+        const stats = await storage.getStoreStats(req.params.storeId);
+        return res.json(stats);
+      }
+
+      return res.status(403).json({ error: "Forbidden" });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch store stats" });
     }

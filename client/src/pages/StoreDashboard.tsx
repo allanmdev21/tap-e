@@ -3,14 +3,42 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Zap, Users, Upload, Monitor } from "lucide-react";
+import { Zap, Users, Upload, Monitor, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
+import type { Store } from "@shared/schema";
+
+interface StoreStats {
+  totalPedestrians: number;
+  totalEnergy: number;
+  todayPedestrians: number;
+  todayEnergy: number;
+}
 
 export default function StoreDashboard() {
-  const [storeName, setStoreName] = useState("Café Aroma da XV");
-  const [location, setLocation] = useState("Rua XV de Novembro, 1234");
-  const [logo, setLogo] = useState<string | null>(null);
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  const { data: store, isLoading: storeLoading } = useQuery<Store>({
+    queryKey: ['/api/stores/my-store'],
+    enabled: !!user,
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery<StoreStats>({
+    queryKey: ['/api/stores/stats', store?.id],
+    queryFn: async () => {
+      if (!store?.id) throw new Error('Store not found');
+      const response = await fetch(`/api/stores/${store.id}/stats`);
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json();
+    },
+    enabled: !!store,
+  });
+
+  const [storeName, setStoreName] = useState("");
+  const [location, setLocation] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,6 +62,27 @@ export default function StoreDashboard() {
     });
   };
 
+  if (storeLoading || statsLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-lg text-muted-foreground">Carregando dados da loja...</div>
+      </div>
+    );
+  }
+
+  if (!store) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        <div className="text-center max-w-md space-y-3">
+          <p className="text-lg font-semibold text-foreground">Loja não encontrada</p>
+          <p className="text-sm text-muted-foreground">
+            Nenhuma loja está cadastrada para este usuário. Entre em contato com a prefeitura para cadastrar seu estabelecimento.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-6">
       <div className="max-w-md mx-auto space-y-6">
@@ -43,59 +92,32 @@ export default function StoreDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="store-name">Nome do Estabelecimento</Label>
-              <Input
-                id="store-name"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                placeholder="Digite o nome"
-                className="h-12"
-                data-testid="input-store-name"
-              />
+              <Label>Nome do Estabelecimento</Label>
+              <p className="text-base font-semibold text-foreground" data-testid="text-store-name">
+                {store.name}
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="store-location">Trecho/Número na Rua XV</Label>
-              <Input
-                id="store-location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Ex: Rua XV, 1234"
-                className="h-12"
-                data-testid="input-store-location"
-              />
+              <Label>Localização</Label>
+              <p className="text-sm text-muted-foreground" data-testid="text-store-location">
+                {store.location}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Logo do Estabelecimento</Label>
-              <Card className="border-2 border-dashed border-border hover-elevate cursor-pointer">
-                <CardContent className="p-6">
-                  <label htmlFor="logo-upload" className="cursor-pointer">
-                    <input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleLogoUpload}
-                      data-testid="input-logo-upload"
-                    />
-                    {logo ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <img src={logo} alt="Logo" className="w-24 h-24 object-contain rounded-lg" />
-                        <p className="text-sm text-primary font-medium">Clique para alterar</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 text-center">
-                        <Upload className="w-12 h-12 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">Adicionar logo</p>
-                          <p className="text-xs text-muted-foreground mt-1">Clique para fazer upload</p>
-                        </div>
-                      </div>
-                    )}
-                  </label>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div>
+                <Label className="text-xs">Pisos Cinéticos</Label>
+                <p className="text-2xl font-bold text-primary" data-testid="text-kinetic-floors">
+                  {store.kineticFloors}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs">Totens LED</Label>
+                <p className="text-2xl font-bold text-primary" data-testid="text-led-totems">
+                  {store.ledTotems}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -108,7 +130,7 @@ export default function StoreDashboard() {
               </div>
               <div>
                 <p className="text-3xl font-bold text-foreground" data-testid="text-store-energy">
-                  1,247
+                  {stats?.todayEnergy ?? 0}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Wh gerados hoje</p>
               </div>
@@ -122,13 +144,40 @@ export default function StoreDashboard() {
               </div>
               <div>
                 <p className="text-3xl font-bold text-foreground" data-testid="text-store-traffic">
-                  2,841
+                  {stats?.todayPedestrians ?? 0}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">pedestres/dia</p>
+                <p className="text-xs text-muted-foreground mt-1">pedestres hoje</p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {stats && (
+          <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                Estatísticas Totais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total de Pedestres</p>
+                  <p className="text-lg font-bold text-foreground" data-testid="text-total-pedestrians">
+                    {stats.totalPedestrians.toLocaleString('pt-BR')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Energia Total</p>
+                  <p className="text-lg font-bold text-foreground" data-testid="text-total-energy">
+                    {stats.totalEnergy.toLocaleString('pt-BR')} Wh
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="bg-primary/5">
           <CardContent className="p-6 space-y-4">
@@ -137,7 +186,7 @@ export default function StoreDashboard() {
               <div className="flex-1">
                 <p className="font-semibold text-foreground mb-1">Seu anúncio no totem</p>
                 <p className="text-sm text-muted-foreground">
-                  Personalize a mensagem que aparece no totem de LED em frente à sua loja
+                  Personalize a mensagem que aparece nos {store.ledTotems} totens de LED em frente à sua loja
                 </p>
               </div>
             </div>

@@ -33,9 +33,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      // Destroy server-side session
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      // Continue logout even if server request fails
+    } finally {
+      // Clear client-side state
+      setUser(null);
+      localStorage.removeItem('user');
+    }
   };
 
   return (
