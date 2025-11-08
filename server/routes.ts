@@ -158,6 +158,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/stores", async (req, res) => {
+    try {
+      const stores = await storage.getAllStores();
+      res.json(stores);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch stores" });
+    }
+  });
+
+  app.get("/api/stores/user/:userId", async (req, res) => {
+    try {
+      const store = await storage.getStoreByUserId(req.params.userId);
+      if (!store) {
+        return res.status(404).json({ error: "Store not found" });
+      }
+      res.json(store);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch store" });
+    }
+  });
+
+  app.get("/api/stores/:storeId/stats", async (req, res) => {
+    try {
+      const stats = await storage.getStoreStats(req.params.storeId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch store stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

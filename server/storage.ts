@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Walk, type InsertWalk, type Friendship, type InsertFriendship, type RankingEntry } from "@shared/schema";
+import { type User, type InsertUser, type Walk, type InsertWalk, type Friendship, type InsertFriendship, type RankingEntry, type Store, type InsertStore, type StoreTraffic, type InsertStoreTraffic } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
@@ -31,17 +31,33 @@ export interface IStorage {
     activeUsers: number;
     topWalkers: { username: string; displayName: string; distance: number; energy: number }[];
   }>;
+  
+  // Stores
+  createStore(store: InsertStore): Promise<Store>;
+  getAllStores(): Promise<Store[]>;
+  getStoreByUserId(userId: string): Promise<Store | undefined>;
+  getStoreStats(storeId: string): Promise<{
+    totalPedestrians: number;
+    totalEnergy: number;
+    todayPedestrians: number;
+    todayEnergy: number;
+  }>;
+  createStoreTraffic(traffic: InsertStoreTraffic): Promise<StoreTraffic>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private walks: Map<string, Walk>;
   private friendships: Map<string, Friendship>;
+  private stores: Map<string, Store>;
+  private storeTraffic: Map<string, StoreTraffic>;
 
   constructor() {
     this.users = new Map();
     this.walks = new Map();
     this.friendships = new Map();
+    this.stores = new Map();
+    this.storeTraffic = new Map();
     
     // Mock data - todo: remove mock functionality
     this.seedMockData();
@@ -81,6 +97,64 @@ export class MemStorage implements IStorage {
     ];
     
     mockWalks.forEach(walk => this.walks.set(walk.id, walk));
+    
+    // Create mock stores
+    const mockStores: Store[] = [
+      {
+        id: "s1",
+        userId: "7", // loja.ruaxv
+        name: "Cafeteria Rua XV",
+        location: "Rua XV de Novembro, 1234",
+        logo: null,
+        kineticFloors: 8,
+        ledTotems: 2,
+        energyToday: 2340,
+        dailyFootTraffic: 487,
+        createdAt: new Date(),
+      },
+      {
+        id: "s2",
+        userId: "10", // Future store owner
+        name: "Boutique Fashion",
+        location: "Rua XV de Novembro, 2456",
+        logo: null,
+        kineticFloors: 6,
+        ledTotems: 1,
+        energyToday: 1890,
+        dailyFootTraffic: 392,
+        createdAt: new Date(),
+      },
+      {
+        id: "s3",
+        userId: "11", // Future store owner
+        name: "Livraria Central",
+        location: "Rua XV de Novembro, 3678",
+        logo: null,
+        kineticFloors: 10,
+        ledTotems: 3,
+        energyToday: 3120,
+        dailyFootTraffic: 625,
+        createdAt: new Date(),
+      },
+    ];
+    
+    mockStores.forEach(store => this.stores.set(store.id, store));
+    
+    // Create mock store traffic data
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const mockTraffic: StoreTraffic[] = [
+      { id: "t1", storeId: "s1", pedestrians: 487, energyGenerated: 2340, date: today },
+      { id: "t2", storeId: "s1", pedestrians: 512, energyGenerated: 2560, date: yesterday },
+      { id: "t3", storeId: "s2", pedestrians: 392, energyGenerated: 1890, date: today },
+      { id: "t4", storeId: "s2", pedestrians: 425, energyGenerated: 2080, date: yesterday },
+      { id: "t5", storeId: "s3", pedestrians: 625, energyGenerated: 3120, date: today },
+      { id: "t6", storeId: "s3", pedestrians: 590, energyGenerated: 2950, date: yesterday },
+    ];
+    
+    mockTraffic.forEach(traffic => this.storeTraffic.set(traffic.id, traffic));
   }
 
   // Users
@@ -275,6 +349,70 @@ export class MemStorage implements IStorage {
       activeUsers,
       topWalkers,
     };
+  }
+
+  // Stores
+  async createStore(insertStore: InsertStore): Promise<Store> {
+    const id = randomUUID();
+    const store: Store = {
+      ...insertStore,
+      id,
+      logo: insertStore.logo ?? null,
+      kineticFloors: insertStore.kineticFloors ?? 0,
+      ledTotems: insertStore.ledTotems ?? 0,
+      energyToday: insertStore.energyToday ?? 0,
+      dailyFootTraffic: insertStore.dailyFootTraffic ?? 0,
+      createdAt: new Date(),
+    };
+    this.stores.set(id, store);
+    return store;
+  }
+
+  async getAllStores(): Promise<Store[]> {
+    return Array.from(this.stores.values());
+  }
+
+  async getStoreByUserId(userId: string): Promise<Store | undefined> {
+    return Array.from(this.stores.values()).find(
+      (store) => store.userId === userId
+    );
+  }
+
+  async getStoreStats(storeId: string): Promise<{
+    totalPedestrians: number;
+    totalEnergy: number;
+    todayPedestrians: number;
+    todayEnergy: number;
+  }> {
+    const traffic = Array.from(this.storeTraffic.values()).filter(
+      (t) => t.storeId === storeId
+    );
+    
+    const totalPedestrians = traffic.reduce((sum, t) => sum + t.pedestrians, 0);
+    const totalEnergy = traffic.reduce((sum, t) => sum + t.energyGenerated, 0);
+    
+    // Get today's traffic (simplified - in production would use date comparison)
+    const todayTraffic = traffic.slice(-1)[0]; // Last entry is "today"
+    const todayPedestrians = todayTraffic?.pedestrians ?? 0;
+    const todayEnergy = todayTraffic?.energyGenerated ?? 0;
+    
+    return {
+      totalPedestrians,
+      totalEnergy,
+      todayPedestrians,
+      todayEnergy,
+    };
+  }
+
+  async createStoreTraffic(insertTraffic: InsertStoreTraffic): Promise<StoreTraffic> {
+    const id = randomUUID();
+    const traffic: StoreTraffic = {
+      ...insertTraffic,
+      id,
+      date: new Date(),
+    };
+    this.storeTraffic.set(id, traffic);
+    return traffic;
   }
 }
 

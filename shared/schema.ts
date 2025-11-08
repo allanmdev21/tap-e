@@ -30,11 +30,23 @@ export const friendships = pgTable("friendships", {
 
 export const stores = pgTable("stores", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // Owner of the store
   name: text("name").notNull(),
   location: text("location").notNull(),
   logo: text("logo"),
+  kineticFloors: integer("kinetic_floors").default(0), // Number of kinetic floor tiles
+  ledTotems: integer("led_totems").default(0), // Number of LED totems
   energyToday: real("energy_today").default(0),
   dailyFootTraffic: integer("daily_foot_traffic").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const storeTraffic = pgTable("store_traffic", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  storeId: varchar("store_id").notNull(),
+  pedestrians: integer("pedestrians").notNull(),
+  energyGenerated: real("energy_generated").notNull(),
+  date: timestamp("date").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -59,6 +71,12 @@ export const insertFriendshipSchema = createInsertSchema(friendships).omit({
 
 export const insertStoreSchema = createInsertSchema(stores).omit({
   id: true,
+  createdAt: true,
+});
+
+export const insertStoreTrafficSchema = createInsertSchema(storeTraffic).omit({
+  id: true,
+  date: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -70,6 +88,8 @@ export type InsertFriendship = z.infer<typeof insertFriendshipSchema>;
 export type Friendship = typeof friendships.$inferSelect;
 export type InsertStore = z.infer<typeof insertStoreSchema>;
 export type Store = typeof stores.$inferSelect;
+export type InsertStoreTraffic = z.infer<typeof insertStoreTrafficSchema>;
+export type StoreTraffic = typeof storeTraffic.$inferSelect;
 
 export type RankingEntry = {
   id: string;
