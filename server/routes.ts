@@ -108,6 +108,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true });
   });
 
+  app.put("/api/friends/:id/reject", async (req, res) => {
+    await storage.updateFriendshipStatus(req.params.id, "rejected");
+    res.json({ success: true });
+  });
+
   app.delete("/api/friends/:userId/:friendId", async (req, res) => {
     await storage.removeFriendship(req.params.userId, req.params.friendId);
     res.json({ success: true });
@@ -120,11 +125,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/friends/:userId/requests", async (req, res) => {
-    const friendships = await storage.getFriendships(req.params.userId);
-    const pendingRequests = friendships.filter(
-      f => f.friendId === req.params.userId && f.status === "pending"
-    );
-    res.json(pendingRequests);
+    try {
+      const friendships = await storage.getFriendships(req.params.userId);
+      const pendingRequests = friendships.filter(
+        f => f.friendId === req.params.userId && f.status === "pending"
+      );
+      
+      // Enrich with requester details
+      const requestsWithDetails = await Promise.all(
+        pendingRequests.map(async (request) => {
+          const requester = await storage.getUser(request.userId);
+          return {
+            ...request,
+            requesterName: requester?.displayName || "Usuário Desconhecido",
+            requesterUsername: requester?.username || "unknown",
+          };
+        })
+      );
+      
+      res.json(requestsWithDetails);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch requests" });
+    }
   });
 
   const httpServer = createServer(app);
