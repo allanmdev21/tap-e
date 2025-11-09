@@ -8,6 +8,11 @@ interface CityStats {
   totalEnergy: number;
   totalUsers: number;
   activeUsers: number;
+  totalStores: number;
+  totalStoreEnergy: number;
+  totalStoreFootTraffic: number;
+  totalKineticFloors: number;
+  totalLedTotems: number;
   topWalkers: {
     username: string;
     displayName: string;
@@ -59,10 +64,10 @@ export default function CityDashboard() {
     ? Math.round((stats.activeUsers / stats.totalUsers) * 100) 
     : 0;
 
-  const totalKineticFloors = stores.reduce((sum, store) => sum + (store.kineticFloors || 0), 0);
-  const totalLedTotems = stores.reduce((sum, store) => sum + (store.ledTotems || 0), 0);
-  const totalStoreEnergy = stores.reduce((sum, store) => sum + (store.energyToday || 0), 0);
-  const totalFootTraffic = stores.reduce((sum, store) => sum + (store.dailyFootTraffic || 0), 0);
+  const totalKineticFloors = stats.totalKineticFloors;
+  const totalLedTotems = stats.totalLedTotems;
+  const totalStoreEnergy = stats.totalStoreEnergy;
+  const totalFootTraffic = stats.totalStoreFootTraffic;
   
   // Find peak traffic store
   const peakStore = stores.length > 0 
@@ -251,7 +256,7 @@ export default function CityDashboard() {
 
         <Card data-testid="card-stores-list">
           <CardHeader>
-            <CardTitle className="text-lg">Lojas Parceiras ({stores.length})</CardTitle>
+            <CardTitle className="text-lg">Lojas Parceiras ({stats.totalStores})</CardTitle>
           </CardHeader>
           <CardContent>
             {stores.length === 0 ? (

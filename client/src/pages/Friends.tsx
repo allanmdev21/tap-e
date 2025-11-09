@@ -10,6 +10,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { User, Friendship } from "@shared/schema";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function Friends() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -149,9 +150,12 @@ export default function Friends() {
   return (
     <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="px-4 py-6 text-center border-b border-border bg-card">
-        <div className="flex items-center justify-center gap-2">
-          <Users className="w-6 h-6 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">Meus Amigos</h1>
+        <div className="flex flex-col items-center gap-3">
+          <BrandLogo className="h-12" />
+          <div className="flex items-center justify-center gap-2">
+            <Users className="w-6 h-6 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">Meus Amigos</h1>
+          </div>
         </div>
       </header>
 

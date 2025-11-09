@@ -3,11 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -61,9 +60,8 @@ export default function Login() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="px-4 py-6 text-center border-b border-border bg-card">
-        <div className="flex items-center justify-center gap-2">
-          <Zap className="w-6 h-6 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">Energia+Publicidade</h1>
+        <div className="flex flex-col items-center gap-3">
+          <BrandLogo className="h-12" />
         </div>
       </header>
 

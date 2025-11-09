@@ -29,6 +29,11 @@ export interface IStorage {
     totalEnergy: number;
     totalUsers: number;
     activeUsers: number;
+    totalStores: number;
+    totalStoreEnergy: number;
+    totalStoreFootTraffic: number;
+    totalKineticFloors: number;
+    totalLedTotems: number;
     topWalkers: { username: string; displayName: string; distance: number; energy: number }[];
   }>;
   
@@ -312,6 +317,11 @@ export class MemStorage implements IStorage {
     totalEnergy: number;
     totalUsers: number;
     activeUsers: number;
+    totalStores: number;
+    totalStoreEnergy: number;
+    totalStoreFootTraffic: number;
+    totalKineticFloors: number;
+    totalLedTotems: number;
     topWalkers: { username: string; displayName: string; distance: number; energy: number }[];
   }> {
     const allUsers = Array.from(this.users.values());
@@ -343,11 +353,23 @@ export class MemStorage implements IStorage {
       .filter(u => u.distance > 0)
       .sort((a, b) => b.distance - a.distance)
       .slice(0, 10);
+
+    const allStores = Array.from(this.stores.values());
+    const totalStores = allStores.length;
+    const totalStoreEnergy = allStores.reduce((sum, store) => sum + (store.energyToday ?? 0), 0);
+    const totalStoreFootTraffic = allStores.reduce((sum, store) => sum + (store.dailyFootTraffic ?? 0), 0);
+    const totalKineticFloors = allStores.reduce((sum, store) => sum + (store.kineticFloors ?? 0), 0);
+    const totalLedTotems = allStores.reduce((sum, store) => sum + (store.ledTotems ?? 0), 0);
     
     return {
       totalEnergy,
       totalUsers,
       activeUsers,
+      totalStores,
+      totalStoreEnergy,
+      totalStoreFootTraffic,
+      totalKineticFloors,
+      totalLedTotems,
       topWalkers,
     };
   }

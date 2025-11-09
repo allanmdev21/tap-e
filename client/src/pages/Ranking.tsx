@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import type { RankingEntry } from "@shared/schema";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function Ranking() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -44,9 +45,12 @@ export default function Ranking() {
   return (
     <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="px-4 py-6 text-center border-b border-border bg-card">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Trophy className="w-6 h-6 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">Ranking da XV</h1>
+        <div className="flex flex-col items-center gap-3 mb-4">
+          <BrandLogo className="h-12" />
+          <div className="flex items-center justify-center gap-2">
+            <Trophy className="w-6 h-6 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">Ranking da XV</h1>
+          </div>
         </div>
         
         <div className="flex gap-2 max-w-md mx-auto">

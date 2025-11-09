@@ -3,14 +3,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Zap, MapPin, Monitor } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen pb-20 bg-background">
-      <header className="px-4 py-6 text-center border-b border-border bg-card">
-        <h1 className="text-xl font-bold text-foreground">Energia+Publicidade</h1>
+      <header className="px-4 py-6 border-b border-border bg-card">
+        <div className="flex flex-col items-center gap-3">
+          <BrandLogo className="h-14" />
+          <h1 className="text-xl font-bold text-foreground"></h1>
+        </div>
       </header>
 
       <main className="flex-1 px-4 py-8">

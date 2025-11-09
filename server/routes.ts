@@ -1,7 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, loginSchema, insertWalkSchema, insertFriendshipSchema, type RankingEntry } from "@shared/schema";
+import { insertUserSchema, loginSchema, insertWalkSchema, insertFriendshipSchema } from "@shared/schema";
+import { z } from "zod";
+
+const createStoreSchema = z.object({
+  ownerUsername: z.string().min(3),
+  name: z.string().min(1),
+  location: z.string().min(1),
+  kineticFloors: z.coerce.number().int().min(0).default(0),
+  ledTotems: z.coerce.number().int().min(0).default(0),
+  energyToday: z.coerce.number().min(0).default(0),
+  dailyFootTraffic: z.coerce.number().int().min(0).default(0),
+  logo: z.string().nullable().optional(),
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
@@ -217,6 +229,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(store);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch store" });
+    }
+  });
+
+  app.post("/api/stores", requireAuth, async (req: any, res) => {
+    try {
+      const requester = await storage.getUser(req.userId);
+      if (!requester || requester.role !== "city_admin") {
+        return res.status(403).json({ error: "Forbidden: Only city admins can create stores" });
+      }
+
+      const payload = createStoreSchema.parse(req.body);
+      const owner = await storage.getUserByUsername(payload.ownerUsername);
+
+      if (!owner) {
+        return res.status(404).json({ error: "Owner not found" });
+      }
+
+      if (owner.role !== "store_owner") {
+        return res.status(400).json({ error: "O usuário informado não é um lojista" });
+      }
+
+      const existingStore = await storage.getStoreByUserId(owner.id);
+      if (existingStore) {
+        return res.status(400).json({ error: "Este lojista já possui uma loja cadastrada" });
+      }
+
+      const store = await storage.createStore({
+        userId: owner.id,
+        name: payload.name,
+        location: payload.location,
+        kineticFloors: payload.kineticFloors,
+        ledTotems: payload.ledTotems,
+        energyToday: payload.energyToday,
+        dailyFootTraffic: payload.dailyFootTraffic,
+        logo: payload.logo ?? null,
+      });
+
+      res.status(201).json(store);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create store" });
     }
   });
 

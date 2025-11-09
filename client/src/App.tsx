@@ -35,7 +35,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <div className="relative">
+          <div className="relative min-h-screen bg-background text-foreground">
             <Router />
             <BottomNav />
           </div>

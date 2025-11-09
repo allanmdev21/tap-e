@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function Walk() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -115,7 +116,10 @@ export default function Walk() {
     return (
       <div className="flex flex-col min-h-screen pb-20 bg-background">
         <header className="px-4 py-6 text-center border-b border-border bg-card">
-          <h1 className="text-xl font-bold text-foreground">Minha Caminhada na XV</h1>
+          <div className="flex flex-col items-center gap-3">
+            <BrandLogo className="h-12" />
+            <h1 className="text-xl font-bold text-foreground">Minha Caminhada na XV</h1>
+          </div>
         </header>
 
         <main className="flex-1 flex items-center justify-center px-4">
@@ -156,7 +160,10 @@ export default function Walk() {
     return (
       <div className="flex flex-col min-h-screen pb-20 bg-background">
         <header className="px-4 py-6 text-center border-b border-border bg-card">
-          <h1 className="text-xl font-bold text-foreground">Caminhada Concluída!</h1>
+          <div className="flex flex-col items-center gap-3">
+            <BrandLogo className="h-12" />
+            <h1 className="text-xl font-bold text-foreground">Caminhada Concluída!</h1>
+          </div>
         </header>
 
         <main className="flex-1 flex items-center justify-center px-4 py-8">
@@ -220,7 +227,10 @@ export default function Walk() {
   return (
     <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="px-4 py-6 text-center border-b border-border bg-card">
-        <h1 className="text-xl font-bold text-foreground">Minha Caminhada na XV</h1>
+        <div className="flex flex-col items-center gap-3">
+          <BrandLogo className="h-12" />
+          <h1 className="text-xl font-bold text-foreground">Minha Caminhada na XV</h1>
+        </div>
       </header>
 
       <main className="flex-1 px-4 py-8">
