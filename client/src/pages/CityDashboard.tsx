@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Users, TrendingUp, BarChart3, Store, Monitor } from "lucide-react";
+import { Zap, Users, TrendingUp, BarChart3, Store, Monitor, ShieldAlert } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
 import type { Store as StoreType } from "@shared/schema";
 
 interface CityStats {
@@ -16,18 +17,40 @@ interface CityStats {
 }
 
 export default function CityDashboard() {
+  const { user } = useAuth();
+
   const { data: stats, isLoading: statsLoading } = useQuery<CityStats>({
     queryKey: ['/api/city/stats'],
   });
 
-  const { data: stores = [], isLoading: storesLoading } = useQuery<StoreType[]>({
+  const { data: stores = [], isLoading: storesLoading, error: storesError } = useQuery<StoreType[]>({
     queryKey: ['/api/stores'],
+    retry: false,
   });
 
   if (statsLoading || storesLoading || !stats) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-lg text-muted-foreground">Carregando dados...</div>
+      </div>
+    );
+  }
+
+  // Check if user has permission to view city dashboard
+  if (user && user.role !== 'city_admin') {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        <div className="max-w-md space-y-4 text-center">
+          <div className="p-4 rounded-full bg-amber-100 dark:bg-amber-900/20 inline-block">
+            <ShieldAlert className="w-12 h-12 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Acesso Restrito</h3>
+            <p className="text-sm text-muted-foreground">
+              Este painel é exclusivo para a prefeitura de Curitiba. Apenas administradores da cidade podem visualizar dados consolidados de todas as lojas e métricas urbanas.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

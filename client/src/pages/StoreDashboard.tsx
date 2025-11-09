@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Zap, Users, Upload, Monitor, TrendingUp } from "lucide-react";
+import { Zap, Users, Upload, Monitor, TrendingUp, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
@@ -20,16 +20,19 @@ export default function StoreDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const { data: store, isLoading: storeLoading } = useQuery<Store>({
+  const { data: store, isLoading: storeLoading, error: storeError } = useQuery<Store>({
     queryKey: ['/api/stores/my-store'],
-    enabled: !!user,
+    enabled: !!user && user.role === 'store_owner',
+    retry: false,
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery<StoreStats>({
     queryKey: ['/api/stores/stats', store?.id],
     queryFn: async () => {
       if (!store?.id) throw new Error('Store not found');
-      const response = await fetch(`/api/stores/${store.id}/stats`);
+      const response = await fetch(`/api/stores/${store.id}/stats`, {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
@@ -61,6 +64,25 @@ export default function StoreDashboard() {
       description: "Funcionalidade em desenvolvimento",
     });
   };
+
+  // Check if user has permission to view store dashboard
+  if (user && user.role !== 'store_owner') {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        <div className="max-w-md space-y-4 text-center">
+          <div className="p-4 rounded-full bg-amber-100 dark:bg-amber-900/20 inline-block">
+            <ShieldAlert className="w-12 h-12 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Acesso Restrito</h3>
+            <p className="text-sm text-muted-foreground">
+              Este painel é exclusivo para lojistas cadastrados na Rua XV. Apenas proprietários de estabelecimentos podem visualizar dados da sua loja.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (storeLoading || statsLoading) {
     return (

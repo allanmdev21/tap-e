@@ -22,6 +22,17 @@ O projeto combina:
 - **Charts**: Recharts
 
 ## Recent Changes (Latest First)
+### v1.3.1 - Frontend Permission Checks (Nov 2025)
+- **Bug Fix**: Corrigida visualização dos dashboards por role
+  - Usuários comuns agora veem mensagem "Acesso Restrito" em ambas as abas
+  - Lojistas veem sua loja + "Acesso Restrito" na aba Prefeitura
+  - Prefeitura vê dados da cidade + "Acesso Restrito" na aba Lojista
+  - Ícone ShieldAlert indica visualmente que o acesso é restrito
+- **Frontend Validation**: Adicionada verificação de `user.role` nos componentes
+  - CityDashboard: verifica `user.role === 'city_admin'`
+  - StoreDashboard: verifica `user.role === 'store_owner'`
+  - Queries só executam se usuário tem permissão (`enabled` condicional)
+
 ### v1.3 - Role-Based Access Control & Store Dashboards (Nov 2025)
 - **Security**: Implementada autenticação server-side com express-session
   - Sessões httpOnly cookies (não podem ser forjadas via JavaScript)
